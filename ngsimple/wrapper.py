@@ -28,7 +28,7 @@ def write_to_container(ctr, geo: str, suffix: str = ".geo") -> str:
 
     # unpack tar contents to container root
     data = open(tmpfile.name + ".tar", 'rb').read()
-    container.put_archive("/", data)
+    ctr.put_archive("/", data)
 
     return tmpfile.name
 
@@ -40,30 +40,30 @@ def generate(geo: str, verbose: bool = True):
     filename = write_to_container(ctr, geo)
 
     # run netgen
-    res = container.exec_run(("netgen "
-                              "-geofile=/{} "
-                              "-meshfile=/output.msh "
-                              "-meshfiletype=\"Gmsh2 Format\" "
-                              "-batchmode").format(filename),
-                             stream=False,
-                             demux=False)
+    res = ctr.exec_run(("netgen "
+                        "-geofile=/{} "
+                        "-meshfile=/output.msh "
+                        "-meshfiletype=\"Gmsh2 Format\" "
+                        "-batchmode").format(filename),
+                       stream=False,
+                       demux=False)
     if verbose:
         print(res.output)
 
     # write output mesh to a temporary tar file
-    out = open(tmpfilename + ".out.tar", 'wb')
-    bits, _ = container.get_archive("/output.msh")
+    out = open(filename + ".out.tar", 'wb')
+    bits, _ = ctr.get_archive("/output.msh")
     for chunk in bits:
         out.write(chunk)
     out.close()
 
     # extract mesh file from the temporary tar file
-    tar = tarfile.open(tmpfilename + ".out.tar", mode='r')
-    tar.extract("output.msh", tmpfilename + ".out")
+    tar = tarfile.open(filename + ".out.tar", mode='r')
+    tar.extract("output.msh", filename + ".out")
     tar.close()
 
     mesh = meshio.read(
-        tmpfilename + ".out/output.msh"
+        filename + ".out/output.msh"
     )
 
     return mesh
