@@ -1,5 +1,7 @@
-**ngsimple**: A simple Python wrapper for running
-[Netgen](https://github.com/NGSolve/netgen) in a container
+**ngsimple**: The easiest way for calling
+[Netgen](https://github.com/NGSolve/netgen) from Python
+
+This is a simple wrapper for running Netgen mesh generator inside a container.
 
 # Installation
 
