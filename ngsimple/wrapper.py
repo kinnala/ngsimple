@@ -71,7 +71,8 @@ def write_to_container(ctr, geo: str, suffix: str = ".geo") -> str:
     tarname = tmpfile.name + ".tar"
     tar = tarfile.open(tarname, mode='w')
     try:
-        tar.add(tmpfile.name)
+        tar.add(tmpfile.name,
+                arcname=os.path.basename(tmpfile.name))
     finally:
         tar.close()
         os.remove(tmpfile.name)
@@ -82,7 +83,7 @@ def write_to_container(ctr, geo: str, suffix: str = ".geo") -> str:
 
     os.remove(tarname)
 
-    return "/" + tmpfile.name
+    return "/" + os.path.basename(tmpfile.name)
 
 
 def fetch_from_container(ctr, filename: str):
