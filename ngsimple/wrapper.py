@@ -105,29 +105,36 @@ def fetch_from_container(ctr, filename: str):
     return mesh
 
 
-def generate(geo: str, verbose: bool = False):
+def generate(geo: str, params: str = None, verbose: bool = False):
     """Generate a mesh based on `geo`-specification.
 
     Parameters
     ----------
     geo
+        A description of the domain via constructive solid geometry.
+        See https://github.com/NGSolve/netgen/tree/master/tutorials
+        for more information.
+    params
+        Additional command line parameters for `netgen`.  For example,
+        '-fine' generates a more refined mesh.
     verbose
+        If `True`, print the output of `netgen`.
 
     Returns
     -------
     Mesh object from `meshio`.
 
     """
-
+    params = "" if params is None else params + ' '
     ctr = get_container()
     filename = write_to_container(ctr, geo)
 
     # run netgen
-    res = ctr.exec_run(("netgen "
+    res = ctr.exec_run(("netgen {}"
                         "-geofile={} "
                         "-meshfile=/output.msh "
                         "-meshfiletype=\"Gmsh2 Format\" "
-                        "-batchmode").format(filename),
+                        "-batchmode").format(params, filename),
                        stream=False,
                        demux=False)
     if verbose:
