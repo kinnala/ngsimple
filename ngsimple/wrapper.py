@@ -6,7 +6,8 @@ import docker
 import meshio
 
 
-def get_container(image: str = 'pymor/ngsolve_py3.7'):
+def get_container(image: str = 'pymor/ngsolve_py3.7',
+                  tag: str = '5a68d5f17ad108242600cc7f479b4ca1b49b81a6'):
     """Pull and/or start a container that has `netgen`.
 
     Parameters
@@ -20,6 +21,8 @@ def get_container(image: str = 'pymor/ngsolve_py3.7'):
 
     """
     client = docker.from_env()
+    print('Pulling {}:{}. This may take a while on the first run.'.format(image, tag))
+    client.images.pull(image, tag=tag)
     ctr = client.containers.create(image,
                                    command='sleep infinity',
                                    detach=True)
