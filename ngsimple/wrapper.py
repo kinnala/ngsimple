@@ -60,9 +60,12 @@ def write_to_container(ctr, geo: str, suffix: str = ".geo") -> str:
     """
 
     # write string to a temporary file on host
-    tmpfile = tempfile.NamedTemporaryFile(suffix=suffix, mode='w')
+    tmpfile = tempfile.NamedTemporaryFile(suffix=suffix,
+                                          mode='w',
+                                          delete=False)
     tmpfile.write(geo)
     tmpfile.seek(0)
+    tmpfile.close()
 
     # create a tar archive
     tarname = tmpfile.name + ".tar"
@@ -71,7 +74,7 @@ def write_to_container(ctr, geo: str, suffix: str = ".geo") -> str:
         tar.add(tmpfile.name)
     finally:
         tar.close()
-        tmpfile.close()
+        os.remove(tmpfile.name)
 
     # unpack tar contents to container root
     with open(tarname, 'rb') as fh:
@@ -96,18 +99,21 @@ def fetch_from_container(ctr, filename: str):
 
     """
 
-    tmpfile = tempfile.NamedTemporaryFile(suffix=".tar", mode='wb')
+    tmpfile = tempfile.NamedTemporaryFile(suffix=".tar",
+                                          mode='wb',
+                                          delete=False)
     bits, _ = ctr.get_archive("{}".format(filename))
     basename = os.path.basename(filename)
     try:
         for chunk in bits:
             tmpfile.write(chunk)
         tmpfile.seek(0)
+        tmpfile.close()
         tar = tarfile.open(tmpfile.name, mode='r')
         tar.extract(basename, tmpfile.name + "_out")
     finally:
-        tmpfile.close()
         tar.close()
+        os.remove(tmpfile.name)
 
     mesh = meshio.read(tmpfile.name + "_out/" + basename)
     os.remove(tmpfile.name + "_out/" + basename)
