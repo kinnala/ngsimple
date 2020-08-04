@@ -1,17 +1,52 @@
-import docker
+import os
 import tarfile
 import tempfile
+
+import docker
 import meshio
 
 
-def get_container():
-    """Pull, start and/or reuse a container containing `netgen`."""
+def get_container(image: str = 'pymor/ngsolve_py3.7'):
+    """Pull and/or start a container that has `netgen`.
+
+    Parameters
+    ----------
+    image
+        The container image name to use.
+
+    Returns
+    -------
+    An object representing the container.
+
+    """
     client = docker.from_env()
-    return client.containers.list()[0]
+    ctr = client.containers.create(image,
+                                   command='sleep infinity',
+                                   detach=True)
+    ctr.start()
+    return ctr
+
+
+def clean_container(ctr):
+    """Kill and remove the container."""
+    ctr.kill()
+    ctr.remove()
 
 
 def write_to_container(ctr, geo: str, suffix: str = ".geo") -> str:
-    """Write a given string to a file inside the container."""
+    """Write a given string to a file inside the container.
+
+    Parameters
+    ----------
+    ctr
+    geo
+    suffix
+
+    Returns
+    -------
+    The filename of the file written inside the container.
+
+    """
 
     # write string to a temporary file on host
     tmpfile = tempfile.NamedTemporaryFile(suffix=suffix, mode='w')
@@ -19,7 +54,8 @@ def write_to_container(ctr, geo: str, suffix: str = ".geo") -> str:
     tmpfile.seek(0)
 
     # create a tar archive
-    tar = tarfile.open(tmpfile.name + ".tar", mode='w')
+    tarname = tmpfile.name + ".tar"
+    tar = tarfile.open(tarname, mode='w')
     try:
         tar.add(tmpfile.name)
     finally:
@@ -27,21 +63,68 @@ def write_to_container(ctr, geo: str, suffix: str = ".geo") -> str:
         tmpfile.close()
 
     # unpack tar contents to container root
-    data = open(tmpfile.name + ".tar", 'rb').read()
-    ctr.put_archive("/", data)
+    with open(tarname, 'rb') as fh:
+        ctr.put_archive("/", fh.read())
 
-    return tmpfile.name
+    os.remove(tarname)
+
+    return "/" + tmpfile.name
 
 
-def generate(geo: str, verbose: bool = True):
-    """Generate a mesh based on `geo`-specification."""
+def fetch_from_container(ctr, filename: str):
+    """Fetch the resulting mesh from container.
+
+    Parameters
+    ----------
+    ctr
+    filename
+
+    Returns
+    -------
+    Mesh object from `meshio`.
+
+    """
+
+    tmpfile = tempfile.NamedTemporaryFile(suffix=".tar", mode='wb')
+    bits, _ = ctr.get_archive("{}".format(filename))
+    basename = os.path.basename(filename)
+    try:
+        for chunk in bits:
+            tmpfile.write(chunk)
+        tmpfile.seek(0)
+        tar = tarfile.open(tmpfile.name, mode='r')
+        tar.extract(basename, tmpfile.name + "_out")
+    finally:
+        tmpfile.close()
+        tar.close()
+
+    mesh = meshio.read(tmpfile.name + "_out/" + basename)
+    os.remove(tmpfile.name + "_out/" + basename)
+    os.rmdir(tmpfile.name + "_out")
+
+    return mesh
+
+
+def generate(geo: str, verbose: bool = False):
+    """Generate a mesh based on `geo`-specification.
+
+    Parameters
+    ----------
+    geo
+    verbose
+
+    Returns
+    -------
+    Mesh object from `meshio`.
+
+    """
 
     ctr = get_container()
     filename = write_to_container(ctr, geo)
 
     # run netgen
     res = ctr.exec_run(("netgen "
-                        "-geofile=/{} "
+                        "-geofile={} "
                         "-meshfile=/output.msh "
                         "-meshfiletype=\"Gmsh2 Format\" "
                         "-batchmode").format(filename),
@@ -50,20 +133,7 @@ def generate(geo: str, verbose: bool = True):
     if verbose:
         print(res.output)
 
-    # write output mesh to a temporary tar file
-    out = open(filename + ".out.tar", 'wb')
-    bits, _ = ctr.get_archive("/output.msh")
-    for chunk in bits:
-        out.write(chunk)
-    out.close()
-
-    # extract mesh file from the temporary tar file
-    tar = tarfile.open(filename + ".out.tar", mode='r')
-    tar.extract("output.msh", filename + ".out")
-    tar.close()
-
-    mesh = meshio.read(
-        filename + ".out/output.msh"
-    )
+    mesh = fetch_from_container(ctr, "/output.msh")
+    clean_container(ctr)
 
     return mesh

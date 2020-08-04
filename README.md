@@ -1,18 +1,22 @@
-**ngsimple**: The easiest way for calling
+**ngsimple**: The easiest way to call
 [Netgen](https://github.com/NGSolve/netgen) from Python
 
-This is a simple wrapper for running Netgen mesh generator inside a container.
+Suppose you wanted to use Netgen in a Python script to generate tetrahedral
+meshes but did not want to spend time installing the entire Netgen/NGSolve
+package which ships with it's own Python interpreter.  This is a simple wrapper
+for running Netgen mesh generator inside a container and functions for calling
+it transparently from any Python interpreter.
 
 # Installation
 
 Install with
 ```
-pip install ngsimple
+pip install git+https://github.com/kinnala/ngsimple.git@master
 ```
-**ngsimple** requires Docker and
+ngsimple uses Docker and
 [docker-py](https://github.com/docker/docker-py)
 for pulling container images and interacting with the mesh generator.
-Moreover, the output is read using [meshio](https://github.com/nschloe/meshio).
+The output mesh is read back to Python using [meshio](https://github.com/nschloe/meshio).
 
 # Example
 
@@ -34,3 +38,6 @@ show(mesh)
 ```
 
 ![Netgen output mesh](https://user-images.githubusercontent.com/973268/89173063-549e0000-d58c-11ea-98b9-91d9ef9f218d.png)
+
+See [Netgen tutorials](https://github.com/NGSolve/netgen/tree/master/tutorials)
+for more information on the format expected by `generate`.
