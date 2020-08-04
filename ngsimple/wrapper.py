@@ -1,6 +1,7 @@
 import os
 import tarfile
 import tempfile
+import json
 
 import docker
 import meshio
@@ -21,12 +22,19 @@ def get_container(image: str = 'pymor/ngsolve_py3.7',
 
     """
     client = docker.from_env()
-    print('Pulling {}:{}. This may take a while on the first run.'.format(image, tag))
-    client.images.pull(image, tag=tag)
+
+    for line in client.api.pull(image,
+                                tag=tag,
+                                stream=True,
+                                decode=True):
+        if "status" in line:
+            print(line["status"])
+
     ctr = client.containers.create(image,
                                    command='sleep infinity',
                                    detach=True)
     ctr.start()
+
     return ctr
 
 
