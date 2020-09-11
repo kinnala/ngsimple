@@ -13,9 +13,9 @@ _This is work-in-progress.  Currently using the following container: https://hub
 
 Install with
 ```
-pip install git+https://github.com/kinnala/ngsimple.git@master
+pip install ngsimple
 ```
-ngsimple uses Docker and
+ngsimple requires Docker and
 [docker-py](https://github.com/docker/docker-py)
 for pulling container images and interacting with the mesh generator.
 The output mesh is read back to Python using [meshio](https://github.com/nschloe/meshio).
