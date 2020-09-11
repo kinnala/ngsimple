@@ -1,6 +1,8 @@
 **ngsimple**: The easiest way to call
 [Netgen](https://github.com/NGSolve/netgen) from Python
 
+[![PyPI](https://img.shields.io/pypi/v/ngsimple)](https://pypi.org/project/ngsimple/)
+
 Suppose you wanted to use Netgen in a Python script to generate tetrahedral
 meshes but did not want to spend time installing the entire [Netgen/NGSolve](https://ngsolve.org/)
 package which ships with it's own Python interpreter.  This is a simple wrapper
