@@ -68,8 +68,9 @@ show()
 
 ## Load to pyfvm and solve Poisson equation
 
-```python
+Snippet adapted from [pyfvm](https://github.com/nschloe/pyfvm/) example. (GPLv3 license).
 
+```python
 from ngsimple import generate
 import pyfvm
 from pyfvm.form_language import *
