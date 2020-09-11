@@ -7,6 +7,8 @@ package which ships with it's own Python interpreter.  This is a simple wrapper
 for running Netgen mesh generator inside a container and functions for calling
 it transparently from any Python interpreter.
 
+_This is work-in-progress.  Currently using the following container: https://hub.docker.com/r/pymor/ngsolve_py3.7. In future, plan is to use a dedicated more lightweight container._
+
 # Installation
 
 Install with
