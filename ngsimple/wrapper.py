@@ -6,9 +6,10 @@ import json
 import docker
 import meshio
 
+from typing import Optional
 
-def get_container(image: str = 'pymor/ngsolve_py3.7',
-                  tag: str = '5a68d5f17ad108242600cc7f479b4ca1b49b81a6'):
+
+def get_container(image, tag):
     """Pull and/or start a container that has `netgen`.
 
     Parameters
@@ -123,7 +124,11 @@ def fetch_from_container(ctr, filename: str):
     return mesh
 
 
-def generate(geo: str, params: str = None, verbose: bool = False):
+def generate(geo: str,
+             params: Optional[str] = None,
+             verbose: bool = False,
+             image: str = 'ngsxfem/ngsolve',
+             tag: str = 'latest'):
     """Generate a mesh based on `geo`-specification.
 
     Parameters
@@ -137,6 +142,10 @@ def generate(geo: str, params: str = None, verbose: bool = False):
         '-fine' generates a more refined mesh.
     verbose
         If `True`, print the output of `netgen`.
+    image
+        The container image to use.
+    tag
+        A tag specifying the exact container image version.
 
     Returns
     -------
@@ -144,8 +153,16 @@ def generate(geo: str, params: str = None, verbose: bool = False):
 
     """
     params = "" if params is None else params + ' '
-    ctr = get_container()
+    ctr = get_container(image, tag)
     filename = write_to_container(ctr, geo)
+
+    # for debugging: check file contents
+    # res = ctr.exec_run(("cat {}").format(filename),
+    #                    user='root',
+    #                    stream=False,
+    #                    demux=False)
+    # if verbose:
+    #     print(res.output)
 
     # run netgen
     res = ctr.exec_run(("netgen {}"
@@ -153,6 +170,7 @@ def generate(geo: str, params: str = None, verbose: bool = False):
                         "-meshfile=/output.msh "
                         "-meshfiletype=\"Gmsh2 Format\" "
                         "-batchmode").format(params, filename),
+                       user='root',
                        stream=False,
                        demux=False)
     if verbose:
